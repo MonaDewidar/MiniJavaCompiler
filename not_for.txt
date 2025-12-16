@@ -1,0 +1,187 @@
+PARSER_BEGIN(MiniJavaCompiler)
+import java.util.*;
+import java.io.*;
+
+public class MiniJavaCompiler {
+    public static Map<String, String> symbolTable = new LinkedHashMap<String, String>();
+
+    public static void main(String args[]) {
+        try {
+            FileInputStream fis = new FileInputStream("Input.txt");
+            MiniJavaCompiler parser = new MiniJavaCompiler(fis);
+            ASTNode root = parser.Start();
+            
+            System.out.println("Syntax validation successful.");
+            System.out.println("\n--- Symbol Table ---");
+            System.out.println(String.format("%-15s | %-10s", "Identifier", "Type"));
+            System.out.println("---------------------------------");
+            for (Map.Entry<String, String> entry : symbolTable.entrySet()) {
+                System.out.println(String.format("%-15s | %-10s", entry.getKey(), entry.getValue()));
+            }
+            
+            System.out.println("\n--- Abstract Syntax Tree ---");
+            root.print("");
+            
+        } catch (ParseException e) {
+            System.err.println("Syntax Error at Line " + e.currentToken.next.beginLine + 
+                               ", Column " + e.currentToken.next.beginColumn);
+            System.err.println("Encountered: " + e.currentToken.next.image);
+        } catch (FileNotFoundException e) {
+            System.err.println("Error: 'Input.txt' not found.");
+        }
+    }
+}
+
+abstract class ASTNode {
+    public abstract void print(String indent);
+}
+
+class ProgramNode extends ASTNode {
+    List<ASTNode> children = new ArrayList<ASTNode>();
+    public void add(ASTNode n) { children.add(n); }
+    public void print(String indent) {
+        System.out.println(indent + "Program");
+        for (ASTNode n : children) n.print(indent + "  ");
+    }
+}
+
+class VarDeclNode extends ASTNode {
+    String type, name;
+    public VarDeclNode(String t, String n) { type = t; name = n; }
+    public void print(String indent) { System.out.println(indent + "VarDecl: " + type + " " + name); }
+}
+
+class AssignmentNode extends ASTNode {
+    String varName;
+    ASTNode value;
+    public AssignmentNode(String n, ASTNode v) { varName = n; value = v; }
+    public void print(String indent) {
+        System.out.println(indent + "Assignment: " + varName + " =");
+        value.print(indent + "  ");
+    }
+}
+
+class WhileNode extends ASTNode {
+    ASTNode condition;
+    List<ASTNode> body;
+    public WhileNode(ASTNode c, List<ASTNode> b) { condition = c; body = b; }
+    public void print(String indent) {
+        System.out.println(indent + "WhileLoop");
+        condition.print(indent + "  [Cond]");
+        for(ASTNode n : body) n.print(indent + "  [Body]");
+    }
+}
+
+class IfNode extends ASTNode {
+    ASTNode condition;
+    List<ASTNode> thenBody;
+    List<ASTNode> elseBody;
+    public IfNode(ASTNode c, List<ASTNode> tb, List<ASTNode> eb) {
+        condition = c; thenBody = tb; elseBody = eb;
+    }
+    public void print(String indent) {
+        System.out.println(indent + "IfStatement");
+        condition.print(indent + "  [Cond]");
+        for(ASTNode n : thenBody) n.print(indent + "  [ThenBody]");
+        if (elseBody != null) {
+            for(ASTNode n : elseBody) n.print(indent + "  [ElseBody]");
+        }
+    }
+}
+
+class BinaryOpNode extends ASTNode {
+    String op;
+    ASTNode left, right;
+    public BinaryOpNode(ASTNode l, String o, ASTNode r) { left = l; op = o; right = r; }
+    public void print(String indent) {
+        System.out.println(indent + "BinaryOp (" + op + ")");
+        left.print(indent + "  ");
+        right.print(indent + "  ");
+    }
+}
+
+class LiteralNode extends ASTNode {
+    String val;
+    public LiteralNode(String v) { val = v; }
+    public void print(String indent) { System.out.println(indent + "Literal: " + val); }
+}
+PARSER_END(MiniJavaCompiler)
+
+SKIP : { " " | "\t" | "\n" | "\r" }
+
+SKIP : {
+  <"//" (~["\n","\r"])* ("\n"|"\r"|"\r\n")>
+| <"/*" (~["*"])* "*" ("*" | (~["*","/"] (~["*"])* "*"))* "/">
+}
+
+TOKEN : {
+  < INT: "int" > | < IF: "if" > | < ELSE: "else" > | < WHILE: "while" > | < RETURN: "return" > 
+| < STRING_TYPE: "String" > 
+| < LBRACE: "{" > | < RBRACE: "}" > | < LPAREN: "(" > | < RPAREN: ")" > | < SEMI: ";" > | < ASSIGN: "=" >
+| < PLUS: "+" > | < MINUS: "-" > | < LT: "<" > | < GT: ">" >
+| < NUMBER: (["0"-"9"])+ >
+| < STRING_LITERAL: "\"" (~["\""])* "\"" >
+| < IDENTIFIER: ["a"-"z","A"-"Z","_"] (["a"-"z","A"-"Z","0"-"9","_"])* >
+}
+
+ASTNode Start() : { ProgramNode prog = new ProgramNode(); ASTNode n; }
+{
+  ( n = Statement() { prog.add(n); } )* <EOF>
+  { return prog; }
+}
+
+ASTNode Statement() : { 
+    ASTNode n; 
+    List<ASTNode> body = new ArrayList<ASTNode>();
+    List<ASTNode> elseBody = null;
+}
+{
+  n = VarDecl() { return n; }
+| LOOKAHEAD(2) n = Assignment() { return n; }
+| <WHILE> <LPAREN> n = Expression() <RPAREN> <LBRACE> ( body = Block() ) <RBRACE> 
+  { return new WhileNode(n, body); }
+| <IF> <LPAREN> n = Expression() <RPAREN> <LBRACE> ( body = Block() ) <RBRACE> 
+  [ <ELSE> <LBRACE> ( elseBody = Block() ) <RBRACE> ]
+  { return new IfNode(n, body, elseBody); }
+}
+
+List<ASTNode> Block() : { List<ASTNode> nodes = new ArrayList<ASTNode>(); ASTNode n; }
+{
+    ( n = Statement() { nodes.add(n); } )*
+    { return nodes; }
+}
+
+ASTNode VarDecl() : { ASTNode n; } 
+{ n = VarDeclNoSemi() <SEMI> { return n; } }
+
+ASTNode VarDeclNoSemi() : { Token t; Token id; }
+{
+  (t = <INT> | t = <STRING_TYPE>) id = <IDENTIFIER> 
+  { 
+    MiniJavaCompiler.symbolTable.put(id.image, t.image); 
+    return new VarDeclNode(t.image, id.image); 
+  }
+}
+
+ASTNode Assignment() : { ASTNode n; } 
+{ n = AssignmentNoSemi() <SEMI> { return n; } }
+
+ASTNode AssignmentNoSemi() : { Token id; ASTNode val; }
+{
+  id = <IDENTIFIER> <ASSIGN> val = Expression() 
+  { return new AssignmentNode(id.image, val); }
+}
+
+ASTNode Expression() : { ASTNode left, right; Token op; }
+{
+  left = Primary() ( ( op = <PLUS> | op = <MINUS> | op = <LT> | op = <GT> ) right = Primary() 
+  { left = new BinaryOpNode(left, op.image, right); } )*
+  { return left; }
+}
+
+ASTNode Primary() : { Token t; }
+{
+  t = <NUMBER> { return new LiteralNode(t.image); }
+| t = <IDENTIFIER> { return new LiteralNode(t.image); }
+| t = <STRING_LITERAL> { return new LiteralNode(t.image); }
+}
