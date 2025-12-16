@@ -48,6 +48,27 @@ class ProgramNode extends ASTNode {
     }
 }
 
+// Added ClassNode
+class ClassNode extends ASTNode {
+    String className;
+    List<ASTNode> body;
+    public ClassNode(String name, List<ASTNode> body) { this.className = name; this.body = body; }
+    public void print(String indent) {
+        System.out.println(indent + "Class: " + className);
+        for (ASTNode n : body) n.print(indent + "  ");
+    }
+}
+
+// Added ReturnNode
+class ReturnNode extends ASTNode {
+    ASTNode value;
+    public ReturnNode(ASTNode v) { value = v; }
+    public void print(String indent) {
+        System.out.println(indent + "ReturnStatement");
+        if (value != null) value.print(indent + "  ");
+    }
+}
+
 class VarDeclNode extends ASTNode {
     String type, name;
     public VarDeclNode(String t, String n) { type = t; name = n; }
@@ -110,8 +131,6 @@ class LiteralNode extends ASTNode {
 }
 PARSER_END(MiniJavaCompiler)
 
-/* THE PARSER WAS FAILING BECAUSE THE SECTION BELOW WAS MISSING */
-
 SKIP : { " " | "\t" | "\n" | "\r" }
 
 SKIP : {
@@ -121,6 +140,7 @@ SKIP : {
 
 TOKEN : {
   < INT: "int" > | < IF: "if" > | < ELSE: "else" > | < WHILE: "while" > | < RETURN: "return" > 
+| < CLASS: "class" > // Added CLASS token
 | < STRING_TYPE: "String" > 
 | < LBRACE: "{" > | < RBRACE: "}" > | < LPAREN: "(" > | < RPAREN: ")" > | < SEMI: ";" > | < ASSIGN: "=" >
 | < PLUS: "+" > | < MINUS: "-" > | < LT: "<" > | < GT: ">" >
@@ -131,14 +151,23 @@ TOKEN : {
 
 ASTNode Start() : { ProgramNode prog = new ProgramNode(); ASTNode n; }
 {
-  ( n = Statement() { prog.add(n); } )* <EOF>
+  ( n = GlobalStatement() { prog.add(n); } )* <EOF>
   { return prog; }
+}
+
+// Added GlobalStatement to allow classes at the top level
+ASTNode GlobalStatement() : { ASTNode n; Token id; List<ASTNode> body; }
+{
+  <CLASS> id = <IDENTIFIER> <LBRACE> body = Block() <RBRACE>
+  { return new ClassNode(id.image, body); }
+| n = Statement() { return n; }
 }
 
 ASTNode Statement() : { 
     ASTNode n; 
     List<ASTNode> body = new ArrayList<ASTNode>();
     List<ASTNode> elseBody = null;
+    ASTNode retVal = null;
 }
 {
   n = VarDecl() { return n; }
@@ -148,6 +177,8 @@ ASTNode Statement() : {
 | <IF> <LPAREN> n = Expression() <RPAREN> <LBRACE> ( body = Block() ) <RBRACE> 
   [ <ELSE> <LBRACE> ( elseBody = Block() ) <RBRACE> ]
   { return new IfNode(n, body, elseBody); }
+| <RETURN> [ retVal = Expression() ] <SEMI> // Added Return statement
+  { return new ReturnNode(retVal); }
 }
 
 List<ASTNode> Block() : { List<ASTNode> nodes = new ArrayList<ASTNode>(); ASTNode n; }

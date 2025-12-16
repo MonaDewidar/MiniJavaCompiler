@@ -1,30 +1,35 @@
-int count;
-int total;
-String status;
-int alert;
-int loopCount;
+class MyProgram {
+    int count;
+    int total;
+    String status;
+    int alert;
+    int loopCount;
 
-count = 0;
-total = 10;
-alert = 0;
-loopCount = 0;
+    count = 0;
+    total = 10;
+    alert = 0;
+    loopCount = 0;
 
-// 1. IF-ELSE with a NESTED while loop
-if (count < total) {
-    status = "running";
-    while (count < 5) {
-        count = count + 1;
+    // 1. IF-ELSE with a NESTED while loop
+    if (count < total) {
+        status = "running";
+        while (count < 5) {
+            count = count + 1;
+        }
+    } else {
+        status = "finished";
+        return; // Example of a return statement without a value
     }
-} else {
-    status = "finished";
-}
 
-// 2. IF WITHOUT ELSE
-if (count > 0) {
-    alert = 1;
-}
+    // 2. IF WITHOUT ELSE
+    if (count > 0) {
+        alert = 1;
+    }
 
-// 3. STANDALONE WHILE LOOP (Added here)
-while (loopCount < 3) {
-    loopCount = loopCount + 1;
+    // 3. STANDALONE WHILE LOOP
+    while (loopCount < 3) {
+        loopCount = loopCount + 1;
+    }
+
+    return 0; // Example of a return statement with a value
 }

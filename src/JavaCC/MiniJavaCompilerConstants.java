@@ -21,33 +21,35 @@ public interface MiniJavaCompilerConstants {
   /** RegularExpression Id. */
   int RETURN = 11;
   /** RegularExpression Id. */
-  int STRING_TYPE = 12;
+  int CLASS = 12;
   /** RegularExpression Id. */
-  int LBRACE = 13;
+  int STRING_TYPE = 13;
   /** RegularExpression Id. */
-  int RBRACE = 14;
+  int LBRACE = 14;
   /** RegularExpression Id. */
-  int LPAREN = 15;
+  int RBRACE = 15;
   /** RegularExpression Id. */
-  int RPAREN = 16;
+  int LPAREN = 16;
   /** RegularExpression Id. */
-  int SEMI = 17;
+  int RPAREN = 17;
   /** RegularExpression Id. */
-  int ASSIGN = 18;
+  int SEMI = 18;
   /** RegularExpression Id. */
-  int PLUS = 19;
+  int ASSIGN = 19;
   /** RegularExpression Id. */
-  int MINUS = 20;
+  int PLUS = 20;
   /** RegularExpression Id. */
-  int LT = 21;
+  int MINUS = 21;
   /** RegularExpression Id. */
-  int GT = 22;
+  int LT = 22;
   /** RegularExpression Id. */
-  int NUMBER = 23;
+  int GT = 23;
   /** RegularExpression Id. */
-  int STRING_LITERAL = 24;
+  int NUMBER = 24;
   /** RegularExpression Id. */
-  int IDENTIFIER = 25;
+  int STRING_LITERAL = 25;
+  /** RegularExpression Id. */
+  int IDENTIFIER = 26;
 
   /** Lexical state. */
   int DEFAULT = 0;
@@ -66,6 +68,7 @@ public interface MiniJavaCompilerConstants {
     "\"else\"",
     "\"while\"",
     "\"return\"",
+    "\"class\"",
     "\"String\"",
     "\"{\"",
     "\"}\"",

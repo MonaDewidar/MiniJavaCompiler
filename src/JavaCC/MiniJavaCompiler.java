@@ -42,6 +42,8 @@ public class MiniJavaCompiler implements MiniJavaCompilerConstants {
       case INT:
       case IF:
       case WHILE:
+      case RETURN:
+      case CLASS:
       case STRING_TYPE:
       case IDENTIFIER:{
         ;
@@ -51,7 +53,7 @@ public class MiniJavaCompiler implements MiniJavaCompilerConstants {
         jj_la1[0] = jj_gen;
         break label_1;
       }
-      n = Statement();
+      n = GlobalStatement();
 prog.add(n);
     }
     jj_consume_token(0);
@@ -59,9 +61,40 @@ prog.add(n);
     throw new Error("Missing return statement in function");
   }
 
+// Added GlobalStatement to allow classes at the top level
+  static final public ASTNode GlobalStatement() throws ParseException {ASTNode n; Token id; List<ASTNode> body;
+    switch ((jj_ntk==-1)?jj_ntk_f():jj_ntk) {
+    case CLASS:{
+      jj_consume_token(CLASS);
+      id = jj_consume_token(IDENTIFIER);
+      jj_consume_token(LBRACE);
+      body = Block();
+      jj_consume_token(RBRACE);
+{if ("" != null) return new ClassNode(id.image, body);}
+      break;
+      }
+    case INT:
+    case IF:
+    case WHILE:
+    case RETURN:
+    case STRING_TYPE:
+    case IDENTIFIER:{
+      n = Statement();
+{if ("" != null) return n;}
+      break;
+      }
+    default:
+      jj_la1[1] = jj_gen;
+      jj_consume_token(-1);
+      throw new ParseException();
+    }
+    throw new Error("Missing return statement in function");
+  }
+
   static final public ASTNode Statement() throws ParseException {ASTNode n;
     List<ASTNode> body = new ArrayList<ASTNode>();
     List<ASTNode> elseBody = null;
+    ASTNode retVal = null;
     switch ((jj_ntk==-1)?jj_ntk_f():jj_ntk) {
     case INT:
     case STRING_TYPE:{
@@ -70,7 +103,7 @@ prog.add(n);
       break;
       }
     default:
-      jj_la1[2] = jj_gen;
+      jj_la1[4] = jj_gen;
       if (jj_2_1(2)) {
         n = Assignment();
 {if ("" != null) return n;}
@@ -104,14 +137,31 @@ prog.add(n);
             break;
             }
           default:
-            jj_la1[1] = jj_gen;
+            jj_la1[2] = jj_gen;
             ;
           }
 {if ("" != null) return new IfNode(n, body, elseBody);}
           break;
           }
+        case RETURN:{
+          jj_consume_token(RETURN);
+          switch ((jj_ntk==-1)?jj_ntk_f():jj_ntk) {
+          case NUMBER:
+          case STRING_LITERAL:
+          case IDENTIFIER:{
+            retVal = Expression();
+            break;
+            }
+          default:
+            jj_la1[3] = jj_gen;
+            ;
+          }
+          jj_consume_token(SEMI);
+{if ("" != null) return new ReturnNode(retVal);}
+          break;
+          }
         default:
-          jj_la1[3] = jj_gen;
+          jj_la1[5] = jj_gen;
           jj_consume_token(-1);
           throw new ParseException();
         }
@@ -127,13 +177,14 @@ prog.add(n);
       case INT:
       case IF:
       case WHILE:
+      case RETURN:
       case STRING_TYPE:
       case IDENTIFIER:{
         ;
         break;
         }
       default:
-        jj_la1[4] = jj_gen;
+        jj_la1[6] = jj_gen;
         break label_2;
       }
       n = Statement();
@@ -161,7 +212,7 @@ nodes.add(n);
       break;
       }
     default:
-      jj_la1[5] = jj_gen;
+      jj_la1[7] = jj_gen;
       jj_consume_token(-1);
       throw new ParseException();
     }
@@ -199,7 +250,7 @@ MiniJavaCompiler.symbolTable.put(id.image, t.image);
         break;
         }
       default:
-        jj_la1[6] = jj_gen;
+        jj_la1[8] = jj_gen;
         break label_3;
       }
       switch ((jj_ntk==-1)?jj_ntk_f():jj_ntk) {
@@ -220,7 +271,7 @@ MiniJavaCompiler.symbolTable.put(id.image, t.image);
         break;
         }
       default:
-        jj_la1[7] = jj_gen;
+        jj_la1[9] = jj_gen;
         jj_consume_token(-1);
         throw new ParseException();
       }
@@ -249,7 +300,7 @@ left = new BinaryOpNode(left, op.image, right);
       break;
       }
     default:
-      jj_la1[8] = jj_gen;
+      jj_la1[10] = jj_gen;
       jj_consume_token(-1);
       throw new ParseException();
     }
@@ -270,16 +321,16 @@ left = new BinaryOpNode(left, op.image, right);
     return false;
   }
 
-  static private boolean jj_3_1()
- {
-    if (jj_3R_4()) return true;
-    return false;
-  }
-
   static private boolean jj_3R_5()
  {
     if (jj_scan_token(IDENTIFIER)) return true;
     if (jj_scan_token(ASSIGN)) return true;
+    return false;
+  }
+
+  static private boolean jj_3_1()
+ {
+    if (jj_3R_4()) return true;
     return false;
   }
 
@@ -295,13 +346,13 @@ left = new BinaryOpNode(left, op.image, right);
   static private Token jj_scanpos, jj_lastpos;
   static private int jj_la;
   static private int jj_gen;
-  static final private int[] jj_la1 = new int[9];
+  static final private int[] jj_la1 = new int[11];
   static private int[] jj_la1_0;
   static {
       jj_la1_init_0();
    }
    private static void jj_la1_init_0() {
-      jj_la1_0 = new int[] {0x2001580,0x200,0x1080,0x500,0x2001580,0x1080,0x780000,0x780000,0x3800000,};
+      jj_la1_0 = new int[] {0x4003d80,0x4003d80,0x200,0x7000000,0x2080,0xd00,0x4002d80,0x2080,0xf00000,0xf00000,0x7000000,};
    }
   static final private JJCalls[] jj_2_rtns = new JJCalls[1];
   static private boolean jj_rescan = false;
@@ -325,7 +376,7 @@ left = new BinaryOpNode(left, op.image, right);
     token = new Token();
     jj_ntk = -1;
     jj_gen = 0;
-    for (int i = 0; i < 9; i++) jj_la1[i] = -1;
+    for (int i = 0; i < 11; i++) jj_la1[i] = -1;
     for (int i = 0; i < jj_2_rtns.length; i++) jj_2_rtns[i] = new JJCalls();
   }
 
@@ -340,7 +391,7 @@ left = new BinaryOpNode(left, op.image, right);
     token = new Token();
     jj_ntk = -1;
     jj_gen = 0;
-    for (int i = 0; i < 9; i++) jj_la1[i] = -1;
+    for (int i = 0; i < 11; i++) jj_la1[i] = -1;
     for (int i = 0; i < jj_2_rtns.length; i++) jj_2_rtns[i] = new JJCalls();
   }
 
@@ -358,7 +409,7 @@ left = new BinaryOpNode(left, op.image, right);
     token = new Token();
     jj_ntk = -1;
     jj_gen = 0;
-    for (int i = 0; i < 9; i++) jj_la1[i] = -1;
+    for (int i = 0; i < 11; i++) jj_la1[i] = -1;
     for (int i = 0; i < jj_2_rtns.length; i++) jj_2_rtns[i] = new JJCalls();
   }
 
@@ -369,7 +420,7 @@ left = new BinaryOpNode(left, op.image, right);
     token = new Token();
     jj_ntk = -1;
     jj_gen = 0;
-    for (int i = 0; i < 9; i++) jj_la1[i] = -1;
+    for (int i = 0; i < 11; i++) jj_la1[i] = -1;
     for (int i = 0; i < jj_2_rtns.length; i++) jj_2_rtns[i] = new JJCalls();
   }
 
@@ -386,7 +437,7 @@ left = new BinaryOpNode(left, op.image, right);
     token = new Token();
     jj_ntk = -1;
     jj_gen = 0;
-    for (int i = 0; i < 9; i++) jj_la1[i] = -1;
+    for (int i = 0; i < 11; i++) jj_la1[i] = -1;
     for (int i = 0; i < jj_2_rtns.length; i++) jj_2_rtns[i] = new JJCalls();
   }
 
@@ -396,7 +447,7 @@ left = new BinaryOpNode(left, op.image, right);
     token = new Token();
     jj_ntk = -1;
     jj_gen = 0;
-    for (int i = 0; i < 9; i++) jj_la1[i] = -1;
+    for (int i = 0; i < 11; i++) jj_la1[i] = -1;
     for (int i = 0; i < jj_2_rtns.length; i++) jj_2_rtns[i] = new JJCalls();
   }
 
@@ -509,12 +560,12 @@ left = new BinaryOpNode(left, op.image, right);
   /** Generate ParseException. */
   static public ParseException generateParseException() {
     jj_expentries.clear();
-    boolean[] la1tokens = new boolean[26];
+    boolean[] la1tokens = new boolean[27];
     if (jj_kind >= 0) {
       la1tokens[jj_kind] = true;
       jj_kind = -1;
     }
-    for (int i = 0; i < 9; i++) {
+    for (int i = 0; i < 11; i++) {
       if (jj_la1[i] == jj_gen) {
         for (int j = 0; j < 32; j++) {
           if ((jj_la1_0[i] & (1<<j)) != 0) {
@@ -523,7 +574,7 @@ left = new BinaryOpNode(left, op.image, right);
         }
       }
     }
-    for (int i = 0; i < 26; i++) {
+    for (int i = 0; i < 27; i++) {
       if (la1tokens[i]) {
         jj_expentry = new int[1];
         jj_expentry[0] = i;
@@ -595,6 +646,27 @@ class ProgramNode extends ASTNode {
     public void print(String indent) {
         System.out.println(indent + "Program");
         for (ASTNode n : children) n.print(indent + "  ");
+    }
+}
+
+// Added ClassNode
+class ClassNode extends ASTNode {
+    String className;
+    List<ASTNode> body;
+    public ClassNode(String name, List<ASTNode> body) { this.className = name; this.body = body; }
+    public void print(String indent) {
+        System.out.println(indent + "Class: " + className);
+        for (ASTNode n : body) n.print(indent + "  ");
+    }
+}
+
+// Added ReturnNode
+class ReturnNode extends ASTNode {
+    ASTNode value;
+    public ReturnNode(ASTNode v) { value = v; }
+    public void print(String indent) {
+        System.out.println(indent + "ReturnStatement");
+        if (value != null) value.print(indent + "  ");
     }
 }
 
